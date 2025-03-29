@@ -2,6 +2,9 @@
 
 HL-Delta is an automated trading system for creating and managing delta-neutral positions on Hyperliquid, a decentralized derivatives exchange.
 
+![HL-Delta in action](image.png)
+*HL-Delta placing orders to open a delta-neutral position*
+
 ## Features
 
 - Implements delta-neutral trading strategies across spot and perpetual markets
