@@ -657,7 +657,20 @@ class Delta:
             
             # For spot, we need to sell what we have
             if spot_size > 0:
-                logger.info(f"Creating spot sell limit order for {coin_name}: {spot_size} @ {spot_limit_price}")
+                # Get actual available balance (total minus any amount on hold)
+                available_spot_size = spot_size
+                if coin_info.spot.position and "hold" in coin_info.spot.position:
+                    available_spot_size = spot_size - coin_info.spot.position["hold"]
+                
+                # Ensure positive size and proper rounding
+                if available_spot_size <= 0:
+                    logger.warning(f"No available balance for {coin_name} - total: {spot_size}, hold: {coin_info.spot.position.get('hold', 0)}")
+                    return False
+                
+                # Round to the proper number of decimals for this spot market
+                rounded_spot_size = self.round_size(coin_name, True, available_spot_size)
+                
+                logger.info(f"Creating spot sell limit order for {coin_name}: {rounded_spot_size} @ {spot_limit_price} (from available: {available_spot_size})")
                 
                 if coin_name == "BTC":
                     spot_name = "UBTC"
@@ -669,7 +682,6 @@ class Delta:
                 spot_pair = f"{spot_name}/USDC"
                 
                 # For sell orders, side is False (sell)
-                rounded_spot_size = self.round_size(coin_name, True, spot_size)
                 spot_order_result = self.exchange.order(spot_pair, False, rounded_spot_size, spot_limit_price, {"limit": {"tif": "Gtc"}})
                 logger.info(f"Spot sell order result: {spot_order_result}")
             
