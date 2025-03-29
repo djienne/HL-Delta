@@ -19,15 +19,11 @@ from typing import Dict, Optional, List, Any, Tuple
 # ANSI color codes for colored terminal output
 class Colors:
     RESET = "\033[0m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    MAGENTA = "\033[95m"
-    CYAN = "\033[96m"
-    WHITE = "\033[97m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+    RED = "\033[91m"     # Error messages
+    GREEN = "\033[92m"   # Success messages
+    YELLOW = "\033[93m"  # Warnings and important highlights
+    BLUE = "\033[94m"    # Info messages
+    BOLD = "\033[1m"     # Bold text for headers
 
 logging.basicConfig(
     level=logging.INFO,
@@ -776,7 +772,7 @@ class Delta:
     
     def display_position_info(self):
         """Display detailed information about tracked coins and positions."""
-        logger.info(f"\n{Colors.BOLD}{Colors.CYAN}Tracked Coins Information:{Colors.RESET}")
+        logger.info(f"\n{Colors.BOLD}Tracked Coins Information:{Colors.RESET}")
         for coin_name, coin_info in self.coins.items():
             if coin_name == "USDC":
                 continue
@@ -790,8 +786,8 @@ class Delta:
             logger.info(f"  Delta Status: {status_color}{status_text}{Colors.RESET}")
             
             if perp_size != 0 or spot_size != 0:
-                logger.info(f"    Perp Size: {Colors.MAGENTA}{perp_size:.4f}{Colors.RESET}")
-                logger.info(f"    Spot Size: {Colors.CYAN}{spot_size:.4f}{Colors.RESET}")
+                logger.info(f"    Perp Size: {Colors.BLUE}{perp_size:.4f}{Colors.RESET}")
+                logger.info(f"    Spot Size: {Colors.GREEN}{spot_size:.4f}{Colors.RESET}")
                 diff_color = Colors.GREEN if diff_percentage < 5 else Colors.YELLOW if diff_percentage < 10 else Colors.RED
                 logger.info(f"    Difference: {diff_color}{diff_percentage:.2f}%{Colors.RESET}")
             
@@ -803,7 +799,7 @@ class Delta:
                 logger.info(f"      Tick Size: {coin_info.perp.tick_size}")
                 
                 if coin_info.perp.funding_rate is not None:
-                    logger.info(f"      Current Funding Rate: {Colors.CYAN}{coin_info.perp.funding_rate:.8f}{Colors.RESET}")
+                    logger.info(f"      Current Funding Rate: {Colors.GREEN}{coin_info.perp.funding_rate:.8f}{Colors.RESET}")
                     
                     # Color funding rate based on value
                     rate_color = Colors.RED
@@ -818,8 +814,8 @@ class Delta:
                 
                 if coin_info.perp.position:
                     pos = coin_info.perp.position
-                    logger.info(f"      Position: {Colors.MAGENTA}{pos['size']:.4f}{Colors.RESET} @ ${Colors.YELLOW}{pos['entry_price']:.2f}{Colors.RESET}")
-                    logger.info(f"      Position Value: ${Colors.CYAN}{pos['position_value']:.2f}{Colors.RESET}")
+                    logger.info(f"      Position: {Colors.BLUE}{pos['size']:.4f}{Colors.RESET} @ ${Colors.YELLOW}{pos['entry_price']:.2f}{Colors.RESET}")
+                    logger.info(f"      Position Value: ${Colors.GREEN}{pos['position_value']:.2f}{Colors.RESET}")
                     
                     # Color PnL based on profit/loss
                     pnl_color = Colors.GREEN if pos['unrealized_pnl'] > 0 else Colors.RED
@@ -841,7 +837,7 @@ class Delta:
                 logger.info(f"      Tick Size: {coin_info.spot.tick_size}")
                 if coin_info.spot.position:
                     pos = coin_info.spot.position
-                    logger.info(f"      Balance: {Colors.CYAN}{pos['total']:.4f}{Colors.RESET}")
+                    logger.info(f"      Balance: {Colors.GREEN}{pos['total']:.4f}{Colors.RESET}")
                     logger.info(f"      On Hold: {Colors.YELLOW}{pos['hold']:.4f}{Colors.RESET}")
                     logger.info(f"      Entry Value: ${Colors.GREEN}{pos['entry_ntl']:.2f}{Colors.RESET}")
                 else:
@@ -849,7 +845,7 @@ class Delta:
         
         ratio = self.spot_perp_repartition()
         ratio_color = Colors.GREEN if 0.665 <= ratio <= 0.735 else Colors.YELLOW if 0.6 <= ratio <= 0.8 else Colors.RED
-        logger.info(f"  Spot Perp Repartition: {ratio_color}{ratio:.4f}{Colors.RESET} (target: {Colors.CYAN}0.7{Colors.RESET})")
+        logger.info(f"  Spot Perp Repartition: {ratio_color}{ratio:.4f}{Colors.RESET} (target: {Colors.GREEN}0.7{Colors.RESET})")
         
         allocation_ok = self.check_allocation()
         if allocation_ok == False:
@@ -882,7 +878,7 @@ class Delta:
             if now.tm_min != 50:
                 return
                 
-            logger.info(f"\n{Colors.BOLD}{Colors.CYAN}Running scheduled check for better funding rates (10 minutes before the hour){Colors.RESET}")
+            logger.info(f"\n{Colors.BOLD}Running scheduled check for better funding rates (10 minutes before the hour){Colors.RESET}")
             
             # Get current funding rates
             from test_market_data import check_funding_rates, calculate_yearly_funding_rates
@@ -962,7 +958,7 @@ class Delta:
                 is_delta_neutral, perp_size, spot_size, _ = self.has_delta_neutral_position(coin_name)
                 if is_delta_neutral:
                     current_position_coin = coin_name
-                    logger.info(f"{Colors.GREEN}Found active delta-neutral position on {Colors.YELLOW}{coin_name}{Colors.GREEN} with perp size {Colors.MAGENTA}{perp_size}{Colors.GREEN} and spot size {Colors.CYAN}{spot_size}{Colors.RESET}")
+                    logger.info(f"{Colors.GREEN}Found active delta-neutral position on {Colors.YELLOW}{coin_name}{Colors.GREEN} with perp size {Colors.BLUE}{perp_size}{Colors.GREEN} and spot size {Colors.GREEN}{spot_size}{Colors.RESET}")
                     break
             
             if not current_position_coin:
@@ -970,7 +966,7 @@ class Delta:
                 # Find the best coin and create a new position if its rate is >= 5%
                 best_coin = self.get_best_yearly_funding_rate()
                 if best_coin and self.coins[best_coin].perp.yearly_funding_rate >= 5.0:
-                    logger.info(f"{Colors.GREEN}Creating new delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.GREEN} with rate {Colors.CYAN}{self.coins[best_coin].perp.yearly_funding_rate:.4f}%{Colors.RESET}")
+                    logger.info(f"{Colors.GREEN}Creating new delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.GREEN} with rate {Colors.GREEN}{self.coins[best_coin].perp.yearly_funding_rate:.4f}%{Colors.RESET}")
                     await self.create_delta_position(best_coin)
                 else:
                     logger.info(f"{Colors.YELLOW}No coin with funding rate >= 5% found. Waiting until next check.{Colors.RESET}")
@@ -1057,12 +1053,12 @@ class Delta:
     async def start(self):
         logger.info(f"{Colors.BOLD}{Colors.GREEN}Starting Delta trading system...{Colors.RESET}")
         
-        logger.info(f"{Colors.BOLD}{Colors.CYAN}Account Summary:{Colors.RESET}")
+        logger.info(f"{Colors.BOLD}Account Summary:{Colors.RESET}")
         logger.info(f"  Total Value: ${Colors.GREEN}{self.total_raw_usd:.2f}{Colors.RESET}")
         logger.info(f"  Account Value: ${Colors.GREEN}{self.account_value:.2f}{Colors.RESET}")
         logger.info(f"  Margin Used: ${Colors.YELLOW}{self.total_margin_used:.2f}{Colors.RESET}")
-        logger.info(f"  Perp Account Value: ${Colors.MAGENTA}{self.perp_user_state:.2f}{Colors.RESET}")
-        logger.info(f"  Spot USDC Value: ${Colors.CYAN}{self._get_spot_account_USDC():.2f}{Colors.RESET}")
+        logger.info(f"  Perp Account Value: ${Colors.BLUE}{self.perp_user_state:.2f}{Colors.RESET}")
+        logger.info(f"  Spot USDC Value: ${Colors.GREEN}{self._get_spot_account_USDC():.2f}{Colors.RESET}")
         logger.info(f"  Spot Account Value: ${Colors.BLUE}{self._get_total_spot_account_value():.2f}{Colors.RESET}")
         
         from test_market_data import check_funding_rates, calculate_yearly_funding_rates
@@ -1096,17 +1092,40 @@ class Delta:
             elif rate >= 5:
                 rate_color = Colors.YELLOW
                 
-            logger.info(f"{Colors.CYAN}Best funding rate coin for new position: {Colors.YELLOW}{best_coin}{Colors.CYAN} with rate {rate_color}{rate:.4f}%{Colors.RESET}")
+            logger.info(f"{Colors.YELLOW}Best funding rate coin for new position: {Colors.YELLOW}{best_coin} with rate {rate_color}{rate:.4f}%{Colors.RESET}")
             
-            # Check if we already have a position for this coin
+            # First check if we have any existing delta-neutral positions we need to close
+            existing_positions_found = False
+            for coin_name in self.tracked_coins:
+                if coin_name == "USDC" or coin_name == best_coin:
+                    continue
+                    
+                is_delta_neutral, perp_size, spot_size, _ = self.has_delta_neutral_position(coin_name)
+                if is_delta_neutral:
+                    existing_positions_found = True
+                    logger.info(f"{Colors.YELLOW}Found existing delta-neutral position on {Colors.BLUE}{coin_name}{Colors.YELLOW}, closing before creating new position{Colors.RESET}")
+                    close_result = self.close_delta_position(coin_name)
+                    if close_result:
+                        logger.info(f"{Colors.GREEN}Successfully initiated closing of existing position on {Colors.BLUE}{coin_name}{Colors.RESET}")
+                    else:
+                        logger.warning(f"{Colors.RED}Failed to close existing position on {Colors.BLUE}{coin_name}{Colors.RESET}")
+                        logger.warning(f"{Colors.RED}Skipping creation of new position until existing positions are closed{Colors.RESET}")
+                        break
+            
+            # Check if best coin already has a position
             is_delta_neutral, perp_size, spot_size, _ = self.has_delta_neutral_position(best_coin)
-            if not is_delta_neutral and rate >= 5.0:
-                logger.info(f"{Colors.GREEN}Creating delta-neutral position for {Colors.YELLOW}{best_coin}...{Colors.RESET}")
-                result = await self.execute_best_delta_strategy()
-                if result:
-                    logger.info(f"{Colors.GREEN}Successfully created delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
+            
+            # Only proceed if we don't have existing positions or if best coin already has a position
+            if (not existing_positions_found or is_delta_neutral) and rate >= 5.0:
+                if not is_delta_neutral:
+                    logger.info(f"{Colors.GREEN}Creating delta-neutral position for {Colors.YELLOW}{best_coin}...{Colors.RESET}")
+                    result = await self.execute_best_delta_strategy()
+                    if result:
+                        logger.info(f"{Colors.GREEN}Successfully created delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
+                    else:
+                        logger.warning(f"{Colors.RED}Failed to create delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
                 else:
-                    logger.warning(f"{Colors.RED}Failed to create delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
+                    logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
             elif is_delta_neutral:
                 logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
             else:
