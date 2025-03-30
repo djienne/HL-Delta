@@ -87,6 +87,7 @@ class Delta:
             self.tracked_coins = ["BTC", "ETH", "HYPE", "USDC"]
             self.coins: Dict[str, CoinInfo] = {}
             self.pending_orders: List[PendingDeltaOrder] = []
+            self._is_running = False  # Track if the bot is actively running
             
             self.account: LocalAccount = eth_account.Account.from_key(self.config["private_key"])
             self.exchange = Exchange(self.account, constants.MAINNET_API_URL, vault_address=self.config["address"])
@@ -735,19 +736,17 @@ class Delta:
         return closed_positions > 0
     
     async def exit_program(self, close_positions=True):
-        """Safely exit the delta trading program.
+        """Exit the program and optionally close all positions."""
+        logger.info("Exiting program...")
         
-        Args:
-            close_positions: Whether to close all open delta positions before exiting
-        """
-        logger.info("Initiating shutdown sequence...")
+        # Set running state to False
+        self._is_running = False
         
         if close_positions:
-            logger.info("Closing all delta-neutral positions before exit...")
+            logger.info("Closing all positions...")
             await self.close_all_delta_positions()
         
-        logger.info("Delta trading system shutting down")
-        # Additional cleanup if needed
+        logger.info("Exited")
         return True
             
     async def execute_best_delta_strategy(self):
@@ -1063,7 +1062,13 @@ class Delta:
             logger.error(f"{Colors.RED}Error checking hourly funding rates: {e}{Colors.RESET}", exc_info=True)
     
     async def start(self):
-        logger.info(f"{Colors.BOLD}{Colors.GREEN}Starting Delta trading system...{Colors.RESET}")
+        """Start the bot's execution loop."""
+        if self._is_running:
+            logger.info("Bot is already running")
+            return
+            
+        self._is_running = True
+        logger.info("Starting Delta bot...")
         
         logger.info(f"{Colors.BOLD}Account Summary:{Colors.RESET}")
         logger.info(f"  Total Value: ${Colors.GREEN}{self.total_raw_usd:.2f}{Colors.RESET}")

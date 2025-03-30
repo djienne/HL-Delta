@@ -1,106 +1,138 @@
-# HL-Delta
+# HyperVault Delta Bot v1.0.0
 
-HL-Delta is an automated trading system for creating and managing delta-neutral positions on Hyperliquid, a decentralized derivatives exchange.
+A delta-neutral trading bot for HyperLiquid exchange, designed to create and manage delta-neutral positions across spot and perpetual markets.
 
-![HL-Delta in action](image.png)
-*HL-Delta placing orders to open a delta-neutral position*
+![Delta Bot in Action](./assets/terminal-screenshot.png)
+*Delta Bot taking a position on HyperLiquid Exchange*
 
 ## Features
 
 - Implements delta-neutral trading strategies across spot and perpetual markets
 - Automatically identifies the best funding rates for optimal yield
 - Monitors and rebalances positions to maintain delta neutrality
+- RESTful API for remote control and monitoring
 - Handles order tracking and management
 - Periodic checks to find better opportunities based on funding rates
 - Graceful shutdown with position closing
 - Comprehensive logging
 
-## Requirements
+## Configuration
 
-- Python 3.7+
-- [Hyperliquid API Python SDK](https://github.com/hyperliquid-dex/hyperliquid-python)
-- `python-dotenv` package for environment variable management
-- `aiohttp` for asynchronous API calls
+The bot can be configured in two ways:
 
-## Setup
+1. **Environment Variables** (.env file):
+   - `HYPERLIQUID_PRIVATE_KEY`: Private key for trading on the exchange
+   - `HYPERLIQUID_ADDRESS`: Trading address for the exchange
+   - `API_SECRET_KEY`: Secret key for API authentication
+   - `API_HOST`: Host for the API server (default: 0.0.0.0)
+   - `API_PORT`: Port for the API server (default: 8080)
+   - `API_ENABLED`: Whether the API server is enabled (default: true)
+   - `AUTOSTART_BOT`: Whether to start trading automatically (default: true)
+   - `LOG_LEVEL`: Logging level (default: INFO)
 
-1. Clone the repository:
+2. **Configuration File** (config.json):
+   - General settings:
+     - `debug`: Enable debug logging
+     - `tracked_coins`: List of coins to track and trade
+     - `autostart`: Whether to start trading automatically
+   - Allocation settings:
+     - `spot_pct`: Percentage of capital to allocate to spot positions
+     - `perp_pct`: Percentage of capital to allocate to perpetual positions
+     - `rebalance_threshold`: Threshold for rebalancing positions
+   - Risk settings:
+     - `max_position_size_usd`: Maximum position size in USD
+     - `position_size_pct`: Position size as a percentage of capital
+     - `max_daily_loss_usd`: Maximum daily loss in USD
+   - Trading settings:
+     - `order_timeout_sec`: Timeout for orders in seconds
+     - `refresh_interval_sec`: Interval for refreshing positions in seconds
+     - `check_funding_interval_min`: Interval for checking funding rates in minutes
+   - API settings:
+     - `host`: Host for the API server
+     - `port`: Port for the API server
+     - `enabled`: Whether the API server is enabled
+
+## Building
+
+Build the Docker image with:
 
 ```bash
-git clone https://github.com/cgaspart/HL-Delta.git
-cd HL-Delta
+./build.sh
 ```
 
-2. Install the required packages:
+This will create two images:
+- `hypervault-tradingbot:delta` (latest version)
+- `hypervault-tradingbot:delta-1.0.0` (versioned tag)
 
-```bash
-pip install hyperliquid python-dotenv aiohttp
-```
+## API Endpoints
 
-3. Create a `.env` file in the root directory with your Hyperliquid credentials:
+The bot provides a RESTful API for remote control and monitoring:
 
-```
-HYPERLIQUID_PRIVATE_KEY=your_private_key_here
-HYPERLIQUID_ADDRESS=your_eth_address_here
-```
+### Bot Control
+- `GET /api/bot/state`: Get the current state of the bot
+- `POST /api/bot/start`: Start the bot's trading operations
+- `POST /api/bot/stop`: Stop the bot's trading operations
+- `POST /api/bot/close-position/{coin}`: Close a specific position
+- `POST /api/bot/create-position/{coin}`: Create a position for a specific coin
+
+### Status and Monitoring
+- `GET /api/status`: Get the current status of the bot and its positions
+- `GET /api/status/funding-rates`: Get the current funding rates for all tracked coins
+- `GET /api/status/positions`: Get all current positions
+
+### Configuration
+- `GET /api/config`: Get the current configuration of the bot
+- `POST /api/config/update`: Update the bot's configuration
+- `GET /api/config/tracked-coins`: Get the list of tracked coins
+- `POST /api/config/add-coin/{coin}`: Add a coin to the tracked coins list
+- `POST /api/config/remove-coin/{coin}`: Remove a coin from the tracked coins list
 
 ## Usage
 
-To start the trading system:
+1. Create a `.env` file from `.env.example` with your credentials
+2. Adjust `config.json` to match your desired trading parameters
+3. Build and run the Docker container:
 
 ```bash
-python Delta.py
+docker run -d \
+  --name delta-bot \
+  -p 8080:8080 \
+  --env-file .env \
+  hypervault-tradingbot:delta-1.0.0
 ```
 
-The system will:
-1. Initialize connections to Hyperliquid
-2. Check current account balances
-3. Analyze funding rates across all tracked coins
-4. Create delta-neutral positions for the coin with the best funding rate
-5. Continuously monitor positions and funding rates
-6. Rebalance as needed to maximize yield
+## The HyperVault Trading Ecosystem (Coming Soon!)
 
-### Testing Funding Rates
+The Delta bot is part of the comprehensive HyperVault trading ecosystem. Our full platform will allow you to:
 
-You can check current funding rates without executing any trades by running:
+- Deploy multiple bots with a single click
+- Leverage our Machine Learning engine to automatically optimize your trading configurations
+- Access specialized bots including this Delta-Neutral bot and our Market Making bots
+- Monitor your performance through our advanced dashboard featuring:
+  - Real-time position management
+  - Earnings visualization and analytics
+  - Latest position tracking and performance metrics
 
-```bash
-python test_market_data.py
-```
-
-This will display current hourly funding rates and annualized rates for all coins on Hyperliquid.
+HyperVault is designed for both new traders seeking simplified automation and experienced traders demanding powerful customization.
 
 ## Delta-Neutral Strategy
 
-HL-Delta implements a capital-efficient strategy:
+The Delta bot implements a capital-efficient strategy:
 - Long spot positions to earn the funding rate
 - Short perpetual futures positions to hedge price risk
 - Automatically switches to better opportunities when funding rates change
 
 The system targets a 70/30 spot-to-perp allocation ratio for optimal capital efficiency.
 
-## Safety Features
+## Versioning
 
-- Graceful handling of API errors
-- Signal handlers for clean shutdowns
-- Position closing on exit
-- Automatic cancellation of stale orders
-- Comprehensive logging
+### Current Version: 1.0.0
 
-## Project Structure
-
-- `Delta.py` - Main trading system with delta-neutral implementation
-- `test_market_data.py` - Utility to check funding rates independently
-- `.env` - Configuration file for API keys (not included in repo)
-- `delta.log` - Log file generated during execution
-
-## Tracked Coins
-
-By default, the system tracks:
-- BTC
-- ETH
-- HYPE
-- USDC
+**Release Notes:**
+- Initial release with core delta-neutral functionality
+- Full integration with HyperVault Trading Bots platform
+- API-based control and monitoring
+- Automatic detection of best funding opportunities
 
 ## License
 
