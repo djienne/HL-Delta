@@ -27,7 +27,7 @@ HL-Delta is an automated trading system for creating and managing delta-neutral 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/HL-Delta.git
+git clone https://github.com/cgaspart/HL-Delta.git
 cd HL-Delta
 ```
 
