@@ -9,15 +9,8 @@
     "perp_pct": 30,
     "rebalance_threshold": 0.05
   },
-  "risk": {
-    "max_position_size_usd": 5000,
-    "position_size_pct": 25,
-    "max_daily_loss_usd": 100
-  },
   "trading": {
-    "order_timeout_sec": 300,
-    "refresh_interval_sec": 60,
-    "check_funding_interval_min": 60
+    "refresh_interval_sec": 60
   },
   "api": {
     "host": "0.0.0.0",

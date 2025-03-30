@@ -18,39 +18,77 @@ A delta-neutral trading bot for HyperLiquid exchange, designed to create and man
 
 ## Configuration
 
-The bot can be configured in two ways:
+The bot uses a combination of configuration files and environment variables:
 
-1. **Environment Variables** (.env file):
-   - `HYPERLIQUID_PRIVATE_KEY`: Private key for trading on the exchange
-   - `HYPERLIQUID_ADDRESS`: Trading address for the exchange
-   - `API_SECRET_KEY`: Secret key for API authentication
-   - `API_HOST`: Host for the API server (default: 0.0.0.0)
-   - `API_PORT`: Port for the API server (default: 8080)
-   - `API_ENABLED`: Whether the API server is enabled (default: true)
-   - `AUTOSTART_BOT`: Whether to start trading automatically (default: true)
-   - `LOG_LEVEL`: Logging level (default: INFO)
+### 1. **Configuration File** (config.json) - Primary Configuration
 
-2. **Configuration File** (config.json):
-   - General settings:
-     - `debug`: Enable debug logging
-     - `tracked_coins`: List of coins to track and trade
-     - `autostart`: Whether to start trading automatically
-   - Allocation settings:
-     - `spot_pct`: Percentage of capital to allocate to spot positions
-     - `perp_pct`: Percentage of capital to allocate to perpetual positions
-     - `rebalance_threshold`: Threshold for rebalancing positions
-   - Risk settings:
-     - `max_position_size_usd`: Maximum position size in USD
-     - `position_size_pct`: Position size as a percentage of capital
-     - `max_daily_loss_usd`: Maximum daily loss in USD
-   - Trading settings:
-     - `order_timeout_sec`: Timeout for orders in seconds
-     - `refresh_interval_sec`: Interval for refreshing positions in seconds
-     - `check_funding_interval_min`: Interval for checking funding rates in minutes
-   - API settings:
-     - `host`: Host for the API server
-     - `port`: Port for the API server
-     - `enabled`: Whether the API server is enabled
+The preferred way to configure the bot is through the `config.json` file, which controls most of the bot's behavior:
+
+```json
+{
+  "general": {
+    "debug": false,
+    "tracked_coins": ["BTC", "ETH", "HYPE", "USDC"],
+    "autostart": true
+  },
+  "allocation": {
+    "spot_pct": 70,
+    "perp_pct": 30,
+    "rebalance_threshold": 0.05
+  },
+  "trading": {
+    "refresh_interval_sec": 60
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "enabled": true
+  }
+}
+```
+
+Configuration sections:
+- **General settings:**
+  - `debug`: Enable detailed debug logging
+  - `tracked_coins`: List of coins to track and trade
+  - `autostart`: Whether to start trading automatically
+- **Allocation settings:**
+  - `spot_pct`: Percentage of capital to allocate to spot positions (e.g., 70%)
+  - `perp_pct`: Percentage of capital to allocate to perpetual positions (e.g., 30%)
+  - `rebalance_threshold`: Threshold for rebalancing positions (e.g., 0.05 = 5%)
+- **Trading settings:**
+  - `refresh_interval_sec`: Interval for refreshing positions in seconds
+- **API settings:**
+  - `host`: Host for the API server
+  - `port`: Port for the API server
+  - `enabled`: Whether the API server is enabled
+
+### 2. **Environment Variables** - Required for Authentication
+
+These environment variables are used for authentication with HyperLiquid and must be set:
+
+- `HYPERLIQUID_PRIVATE_KEY`: Your private key for trading on HyperLiquid
+- `HYPERLIQUID_ADDRESS`: Your Ethereum address for HyperLiquid
+
+Example using environment variables:
+```bash
+export HYPERLIQUID_PRIVATE_KEY={PRIVATE_KEY}
+export HYPERLIQUID_ADDRESS={SUB_ACCOUNT_TRADING_ADDRESS}
+```
+
+## Quick Start
+
+1. Clone the repository
+2. Set up environment variables for authentication
+3. Customize `config.json` to match your desired trading parameters
+4. Run the example script to test your configuration:
+```bash
+python example.py
+```
+5. Start the bot:
+```bash
+python Delta.py
+```
 
 ## Building
 

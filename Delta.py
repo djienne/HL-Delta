@@ -7,7 +7,7 @@ import os
 import logging
 import asyncio
 import time
-from dotenv import load_dotenv
+import json
 from hyperliquid.exchange import Exchange
 from hyperliquid.info import Info
 from hyperliquid.utils import constants
@@ -81,25 +81,36 @@ class PendingDeltaOrder:
 
 
 class Delta:
-    def __init__(self):
+    def __init__(self, config_path="config.json"):
+        self.config_path = config_path
         self.config = self._load_config()
         try:
-            self.tracked_coins = ["BTC", "ETH", "HYPE", "USDC"]
+            # Initialize tracked coins from config
+            self.tracked_coins = self.config["general"]["tracked_coins"]
             self.coins: Dict[str, CoinInfo] = {}
             self.pending_orders: List[PendingDeltaOrder] = []
             self._is_running = False  # Track if the bot is actively running
             
-            self.account: LocalAccount = eth_account.Account.from_key(self.config["private_key"])
-            self.exchange = Exchange(self.account, constants.MAINNET_API_URL, vault_address=self.config["address"])
+            # Set debug mode from config
+            if self.config["general"].get("debug", False):
+                logger.setLevel(logging.DEBUG)
+                logger.debug("Debug mode enabled")
+            
+            # Load credentials from environment variables
+            private_key = self._get_required_env("HYPERLIQUID_PRIVATE_KEY")
+            self.address = self._get_required_env("HYPERLIQUID_ADDRESS")
+            
+            self.account: LocalAccount = eth_account.Account.from_key(private_key)
+            self.exchange = Exchange(self.account, constants.MAINNET_API_URL, vault_address=self.address)
             self.info = Info(constants.MAINNET_API_URL, skip_ws=True)
             self.api_url = constants.MAINNET_API_URL
             
-            self.user_state = self.info.user_state(self.config["address"])
-            self.spot_user_state = self.info.spot_user_state(self.config["address"])
+            self.user_state = self.info.user_state(self.address)
+            self.spot_user_state = self.info.spot_user_state(self.address)
             self.perp_user_state = self.account_balance = float(self.user_state['crossMarginSummary'].get('accountValue', 0))
             self.margin_summary = self.user_state["marginSummary"]
-            self.address = self.config["address"]
             
+            # Load market data
             spot_meta = self.info.spot_meta()
             spot_coins = spot_meta["tokens"]
             
@@ -164,6 +175,15 @@ class Delta:
             self.account_value = float(self.margin_summary["accountValue"])
             self.total_margin_used = float(self.margin_summary["totalMarginUsed"])
             
+            # Initialize allocation targets from config
+            self.spot_allocation_pct = self.config["allocation"]["spot_pct"] / 100.0
+            self.perp_allocation_pct = self.config["allocation"]["perp_pct"] / 100.0
+            self.rebalance_threshold = self.config["allocation"]["rebalance_threshold"]
+            
+            # Refresh interval
+            self.refresh_interval_sec = self.config["trading"].get("refresh_interval_sec", 60)
+            
+            # Load positions
             for position in self.user_state.get("assetPositions", []):
                 if position["type"] == "oneWay" and "position" in position:
                     pos = position["position"]
@@ -201,25 +221,32 @@ class Delta:
             logger.error(f"Failed to initialize clients: {e}")
             raise RuntimeError("Client initialization failed") from e
 
+    def _get_required_env(self, env_name):
+        """Get a required environment variable or raise an informative error."""
+        value = os.getenv(env_name)
+        if not value or value == "your_private_key_here" or value == "your_eth_address_here":
+            raise ValueError(f"{env_name} environment variable not set or has default placeholder value")
+        return value
+
     def _load_config(self):
-        load_dotenv()
-        
-        private_key = os.getenv("HYPERLIQUID_PRIVATE_KEY")
-        address = os.getenv("HYPERLIQUID_ADDRESS")
-        
-        if not private_key or private_key == "your_private_key_here":
-            raise ValueError("HYPERLIQUID_PRIVATE_KEY not properly set in .env file")
-        
-        if not address or address == "your_eth_address_here":
-            raise ValueError("HYPERLIQUID_ADDRESS not properly set in .env file")
-        
-        return {
-            "private_key": private_key,
-            "address": address
-        }
+        """Load configuration from config.json"""
+        try:
+            with open(self.config_path, 'r') as f:
+                config = json.load(f)
+                logger.info(f"Loaded configuration from {self.config_path}")
+                return config
+        except FileNotFoundError:
+            logger.error(f"Configuration file {self.config_path} not found")
+            raise
+        except json.JSONDecodeError:
+            logger.error(f"Error parsing JSON in {self.config_path}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error loading config: {e}")
+            raise
         
     def _get_spot_account_USDC(self):
-        spot_user_state = self.info.spot_user_state(self.config["address"])
+        spot_user_state = self.info.spot_user_state(self.address)
         for balance in spot_user_state["balances"]:
             if balance["coin"] == "USDC":
                 return float(balance["total"])
@@ -310,7 +337,7 @@ class Delta:
         return total_spot_value
 	
     def _get_spot_account_value(self):
-        spot_user_state = self.info.spot_user_state(self.config["address"])
+        spot_user_state = self.info.spot_user_state(self.address)
         for balance in spot_user_state["balances"]:
             print(balance)
     
@@ -765,18 +792,21 @@ class Delta:
     
     def check_allocation(self):
         ratio = self.spot_perp_repartition()
-        if ratio < 0.665:  # 0.7 - 5%
+        lower_bound = self.spot_allocation_pct - self.rebalance_threshold
+        upper_bound = self.spot_allocation_pct + self.rebalance_threshold
+        
+        if ratio < lower_bound:
             spot_value = self._get_total_spot_account_value()
             perp_value = self.perp_user_state
-            amount_to_transfer = (perp_value * 0.7 - spot_value * 0.3) / 1.0
-            logger.info(f"Allocation mismatch: {ratio:.2f} (target: 0.7)")
+            amount_to_transfer = (perp_value * self.spot_allocation_pct - spot_value * self.perp_allocation_pct) / 1.0
+            logger.info(f"Allocation mismatch: {ratio:.2f} (target: {self.spot_allocation_pct:.2f})")
             logger.info(f"Recommended transfer from perp to spot: ${amount_to_transfer:.2f}")
             return False
-        elif ratio > 0.735:  # 0.7 + 5%
+        elif ratio > upper_bound:
             spot_value = self._get_total_spot_account_value()
             perp_value = self.perp_user_state
-            amount_to_transfer = (spot_value * 0.3 - perp_value * 0.7) / 1.0
-            logger.info(f"Allocation mismatch: {ratio:.2f} (target: 0.7)")
+            amount_to_transfer = (spot_value * self.perp_allocation_pct - perp_value * self.spot_allocation_pct) / 1.0
+            logger.info(f"Allocation mismatch: {ratio:.2f} (target: {self.spot_allocation_pct:.2f})")
             logger.info(f"Recommended transfer from spot to perp: ${amount_to_transfer:.2f}")
             return False
         return True
@@ -916,8 +946,8 @@ class Delta:
             
             # Refresh user state to get latest positions
             try:
-                self.user_state = self.info.user_state(self.config["address"])
-                self.spot_user_state = self.info.spot_user_state(self.config["address"])
+                self.user_state = self.info.user_state(self.address)
+                self.spot_user_state = self.info.spot_user_state(self.address)
                 
                 # Update perp positions
                 for position in self.user_state.get("assetPositions", []):
@@ -1063,6 +1093,11 @@ class Delta:
     
     async def start(self):
         """Start the bot's execution loop."""
+        # Check if bot should autostart
+        if not self.config["general"].get("autostart", True):
+            logger.info("Autostart disabled in config. Call start() manually to begin.")
+            return
+        
         if self._is_running:
             logger.info("Bot is already running")
             return
@@ -1081,7 +1116,7 @@ class Delta:
         from test_market_data import check_funding_rates, calculate_yearly_funding_rates
         
         funding_rates = await check_funding_rates()
-        yearly_rates = calculate_yearly_funding_rates(funding_rates)
+        yearly_rates = calculate_yearly_funding_rates(funding_rates, self.tracked_coins)
         
         for coin_name, rate in funding_rates.items():
             if coin_name in self.coins and self.coins[coin_name].perp:
@@ -1159,8 +1194,8 @@ class Delta:
                 
                 # Add other periodic tasks here
                 
-                # Sleep for a bit
-                await asyncio.sleep(30)
+                # Sleep for a bit - use config refresh interval
+                await asyncio.sleep(self.refresh_interval_sec)
             except KeyboardInterrupt:
                 logger.info(f"{Colors.YELLOW}Keyboard interrupt detected in main loop{Colors.RESET}")
                 break
@@ -1202,7 +1237,7 @@ def setup_signal_handlers(delta_instance):
 async def main():
     delta = None
     try:
-        delta = Delta()
+        delta = Delta("config.json")
         setup_signal_handlers(delta)
         await delta.start()
     except KeyboardInterrupt:
