@@ -3,6 +3,7 @@ FORKED VERSION with
 * uses wallet address instead of Vault (no need to pay 100$ to set up a Vault).
 * Added leverage parameter that will change the leverage (3 by default) and put margin to Cross (**always use a dedicated account for this bot**).
 * The script `show_tickers.py` shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; it is somewhat arbitrary so it will be hardcoded).
+* Will not close the Delta neutral position when the code is interupted (ctrl+c) or closed. But will update position if necessary. **The user must close the position manually if desired**.
 
 Additional information:
 *  Use a dedicated hot wallet. Make sure Leverage is set to Cross. You may set it to 3, or a lower value depending in your `spot_pct` and `perp_pct`. Be careful.
