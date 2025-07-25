@@ -5,7 +5,7 @@ FORKED VERSION with
 * The script `show_tickers.py` shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; it is somewhat arbitrary so it will be hardcoded).
 
 Additional information:
-*  Use a deicated hot wallet. Make sure Leverage is set to Cross. You may alsi not set it to 10 but a lower value depending in your `spot_pct` and `perp_pct`.
+*  Use a deicated hot wallet. Make sure Leverage is set to Cross. You may set it to 3, or a lower value depending in your `spot_pct` and `perp_pct`.
 *  in config.json, the BASE string of the Futures Market should be used, format is BASE/USDC:USDC.
 *  You should use a dedicated Hot Wallet. Cold wallets like ledger will not work.
 *  When setting up the environment variables for the `HYPERLIQUID_ADDRESS` and `HYPERLIQUID_PRIVATE_KEY`, you must use ones from a Hot wallet (e.g. generated with Rabby, Metamask, ...). Your `HYPERLIQUID_ADDRESS` is your Ethereum wallet addrees (copy/paste from Metamask or Rabby), and `HYPERLIQUID_PRIVATE_KEY` is the secret key given by Hyperliquid when you generate a API key pair (On Hyperliquid website, section more->API).
