@@ -7,7 +7,8 @@
   "allocation": {
     "spot_pct": 70,
     "perp_pct": 30,
-    "rebalance_threshold": 0.05
+    "rebalance_threshold": 0.05,
+    "leverage": 3
   },
   "trading": {
     "refresh_interval_sec": 60
