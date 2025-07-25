@@ -101,7 +101,7 @@ class Delta:
             self.address = self._get_required_env("HYPERLIQUID_ADDRESS")
             
             self.account: LocalAccount = eth_account.Account.from_key(private_key)
-            self.exchange = Exchange(self.account, constants.MAINNET_API_URL, vault_address=self.address)
+            self.exchange = Exchange(self.account, constants.MAINNET_API_URL, account_address=self.address)
             self.info = Info(constants.MAINNET_API_URL, skip_ws=True)
             self.api_url = constants.MAINNET_API_URL
             
@@ -135,6 +135,32 @@ class Delta:
                             tick_size=1
                         )
                     elif coin_name == "ETH" and spot_coin["name"] == "UETH":
+                        self.coins[coin_name].spot = SpotMarket(
+                            name=spot_coin["name"],
+                            token_id=spot_coin["tokenId"],
+                            index=spot_coin["index"],
+                            sz_decimals=spot_coin["szDecimals"],
+                            wei_decimals=spot_coin["weiDecimals"],
+                            is_canonical=spot_coin["isCanonical"],
+                            full_name=spot_coin["fullName"],
+                            evm_contract=spot_coin.get("evmContract"),
+                            deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
+                            tick_size=0.1
+                        )
+                    elif coin_name == "SOL" and spot_coin["name"] == "USOL":
+                        self.coins[coin_name].spot = SpotMarket(
+                            name=spot_coin["name"],
+                            token_id=spot_coin["tokenId"],
+                            index=spot_coin["index"],
+                            sz_decimals=spot_coin["szDecimals"],
+                            wei_decimals=spot_coin["weiDecimals"],
+                            is_canonical=spot_coin["isCanonical"],
+                            full_name=spot_coin["fullName"],
+                            evm_contract=spot_coin.get("evmContract"),
+                            deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
+                            tick_size=0.1
+                        )
+                    elif coin_name == "FARTCOIN" and spot_coin["name"] == "UFART":
                         self.coins[coin_name].spot = SpotMarket(
                             name=spot_coin["name"],
                             token_id=spot_coin["tokenId"],
@@ -207,7 +233,10 @@ class Delta:
                         coin_name = "BTC"
                     elif coin_name == "UETH":
                         coin_name = "ETH"
-                    
+                    elif coin_name == "USOL":
+                        coin_name = "SOL"
+                    elif coin_name == "UFART":
+                        coin_name = "FARTCOIN"
                     if coin_name in self.coins and self.coins[coin_name].spot:
                         self.coins[coin_name].spot.position = {
                             "total": float(balance["total"]),
@@ -504,6 +533,10 @@ class Delta:
                 spot_name = "UBTC"
             elif coin_name == "ETH":
                 spot_name = "UETH"
+            elif coin_name == "SOL":
+                spot_name = "USOL"
+            elif coin_name == "FARTCOIN":
+                spot_name = "UFART"
             else:
                 spot_name = coin_name
                 
@@ -563,6 +596,10 @@ class Delta:
                             spot_name = "UBTC"
                         elif pending_order.coin_name == "ETH":
                             spot_name = "UETH"
+                        elif pending_order.coin_name == "SOL":
+                            spot_name = "USOL"
+                        elif pending_order.coin_name == "FARTCOIN":
+                            spot_name = "UFART"
                         else:
                             spot_name = pending_order.coin_name
                             
@@ -597,6 +634,10 @@ class Delta:
                         spot_name = "UBTC"
                     elif pending_order.coin_name == "ETH":
                         spot_name = "UETH"
+                    elif pending_order.coin_name == "SOL":
+                        spot_name = "USOL"
+                    elif pending_order.coin_name == "FARTCOIN":
+                        spot_name = "UFART"
                     else:
                         spot_name = pending_order.coin_name
                         
@@ -704,6 +745,10 @@ class Delta:
                     spot_name = "UBTC"
                 elif coin_name == "ETH":
                     spot_name = "UETH"
+                elif coin_name == "SOL":
+                    spot_name = "USOL"
+                elif coin_name == "FARTCOIN":
+                    spot_name = "UFART"
                 else:
                     spot_name = coin_name
                     
@@ -823,7 +868,7 @@ class Delta:
             is_delta_neutral, perp_size, spot_size, diff_percentage = self.has_delta_neutral_position(coin_name)
             
             status_color = Colors.GREEN if is_delta_neutral else Colors.RED
-            status_text = "✅ DELTA NEUTRAL" if is_delta_neutral else "❌ NOT DELTA NEUTRAL"
+            status_text = " DELTA NEUTRAL" if is_delta_neutral else " NOT DELTA NEUTRAL"
             logger.info(f"  Delta Status: {status_color}{status_text}{Colors.RESET}")
             
             if perp_size != 0 or spot_size != 0:
@@ -974,7 +1019,10 @@ class Delta:
                             coin_name = "BTC"
                         elif coin_name == "UETH":
                             coin_name = "ETH"
-                        
+                        elif coin_name == "USOL":
+                            coin_name = "SOL"
+                        elif coin_name == "UFART":
+                            coin_name = "FARTCOIN"
                         if coin_name in self.coins and self.coins[coin_name].spot:
                             self.coins[coin_name].spot.position = {
                                 "total": float(balance["total"]),
