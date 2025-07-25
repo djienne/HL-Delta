@@ -1306,9 +1306,9 @@ async def main():
         if delta:
             try:
                 # Make sure to close positions before exiting
-                logger.info("Attempting to close all positions...")
-                await delta.close_all_delta_positions()
-                logger.info("Position closing complete")
+                #logger.info("Attempting to close all positions...")
+                #await delta.close_all_delta_positions()
+                #logger.info("Position closing complete")
                 await delta.exit_program(close_positions=False)  # Already closed positions above
             except Exception as e:
                 logger.error(f"Error during shutdown: {e}", exc_info=True)
@@ -1316,7 +1316,7 @@ async def main():
         logger.error(f"Error running Delta: {e}", exc_info=True)
         if delta:
             try:
-                await delta.exit_program(close_positions=True)
+                await delta.exit_program(close_positions=False)
             except Exception as shutdown_e:
                 logger.error(f"Error during shutdown: {shutdown_e}", exc_info=True)
 
