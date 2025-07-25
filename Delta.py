@@ -159,7 +159,7 @@ class Delta:
                             full_name=spot_coin["fullName"],
                             evm_contract=spot_coin.get("evmContract"),
                             deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
-                            tick_size=0.1
+                            tick_size=0.01
                         )
                     elif coin_name == "FARTCOIN" and spot_coin["name"] == "UFART":
                         self.coins[coin_name].spot = SpotMarket(
@@ -173,6 +173,19 @@ class Delta:
                             evm_contract=spot_coin.get("evmContract"),
                             deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
                             tick_size=0.1
+                        )
+                    elif coin_name == "PUMP" and spot_coin["name"] == "PUMP":
+                        self.coins[coin_name].spot = SpotMarket(
+                            name=spot_coin["name"],
+                            token_id=spot_coin["tokenId"],
+                            index=spot_coin["index"],
+                            sz_decimals=spot_coin["szDecimals"],
+                            wei_decimals=spot_coin["weiDecimals"],
+                            is_canonical=spot_coin["isCanonical"],
+                            full_name=spot_coin["fullName"],
+                            evm_contract=spot_coin.get("evmContract"),
+                            deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
+                            tick_size=0.0000001
                         )
                     elif coin_name == spot_coin["name"]:
                         self.coins[coin_name].spot = SpotMarket(
@@ -323,7 +336,7 @@ class Delta:
         available_usdc = USDC_balance * 0.9
         
         # Ensure we have sufficient USDC (at least $10 worth)
-        if available_usdc < 10:
+        if available_usdc < 11:
             logger.warning(f"Insufficient USDC balance for spot purchase: ${available_usdc:.2f}")
             return 0
         
@@ -331,16 +344,19 @@ class Delta:
         size = available_usdc / spot_price
         
         # Set minimum size threshold (e.g. $10 worth)
-        min_size_value = 10 / spot_price
+        min_size_value = 11 / spot_price
         
         if size < min_size_value:
             logger.warning(f"Calculated spot size too small: {size} (min: {min_size_value})")
             return 0
             
         rounded_size = self.round_size(coin_name, True, size)
+
+        if coin_name=='PUMP':
+            rounded_size = float(int(rounded_size))
         
         # Log the calculation for debugging
-        logger.info(f"Calculated optimal spot size for {coin_name}: {size} -> rounded to {rounded_size} (USDC: ${available_usdc:.2f}, price: ${spot_price:.2f})")
+        logger.info(f"Calculated optimal spot size for {coin_name}: {size} -> rounded to {rounded_size} (USDC: ${available_usdc:.3f}, price: ${spot_price:.7f})")
         
         return rounded_size
     
@@ -354,7 +370,10 @@ class Delta:
         
         # Round perp size according to the coin's perp sz_decimals
         rounded_size = self.round_size(coin_name, False, spot_size)
-        
+
+        if coin_name=='SOL' or coin_name=='USOL':
+            rounded_size = round(rounded_size,2)
+
         # Log the calculation for debugging
         logger.info(f"Calculated optimal perp size for {coin_name}: {spot_size} -> rounded to {rounded_size}")
         
@@ -522,7 +541,15 @@ class Delta:
                 return False
                 
             tick_size = coin_info.spot.tick_size
+            if coin_name=="PUMP":
+                tick_size = 0.0000001
+            logger.info(tick_size)
             spot_limit_price = self.round_price(coin_name, price + tick_size)
+            
+            tick_size = coin_info.perp.tick_size
+            if coin_name=="PUMP":
+                tick_size = 0.000001
+            logger.info(tick_size)
             perp_limit_price = self.round_price(coin_name, price - tick_size)
                 
             # Create a new pending order to track
@@ -543,10 +570,16 @@ class Delta:
                 spot_name = coin_name
                 
             spot_pair = f"{spot_name}/USDC"
+
+            if coin_name == "PUMP":
+                spot_size=round(spot_size)
+                spot_limit_price=round(spot_limit_price,7)
             
             spot_order_result = self.exchange.order(spot_pair, True, spot_size, spot_limit_price, {"limit": {"tif": "Gtc"}})
             logger.info(f"Spot order result: {spot_order_result}")
             
+            if coin_name=="SOL":
+                perp_size=round(perp_size,2)
             logger.info(f"Creating perp short limit order for {coin_name}: {-perp_size} @ {perp_limit_price}")
             perp_order_result = self.exchange.order(coin_name, False, perp_size, perp_limit_price, {"limit": {"tif": "Gtc"}})
             logger.info(f"Perp order result: {perp_order_result}")
@@ -934,12 +967,13 @@ class Delta:
                     logger.info(f"      Position: {Colors.RED}None{Colors.RESET}")
         
         ratio = self.spot_perp_repartition()
-        ratio_color = Colors.GREEN if 0.665 <= ratio <= 0.735 else Colors.YELLOW if 0.6 <= ratio <= 0.8 else Colors.RED
-        logger.info(f"  Spot Perp Repartition: {ratio_color}{ratio:.4f}{Colors.RESET} (target: {Colors.GREEN}0.7{Colors.RESET})")
+        wanted_ratio = self.spot_allocation_pct
+        ratio_color = Colors.GREEN if wanted_ratio*0.95 <= ratio <= wanted_ratio*1.05 else Colors.YELLOW if wanted_ratio*0.90 <= ratio <= wanted_ratio*1.10 else Colors.RED
+        logger.info(f"  Spot Perp Repartition: {ratio_color}{ratio:.4f}{Colors.RESET} (target: {Colors.GREEN}{self.spot_allocation_pct}{Colors.RESET})")
         
         allocation_ok = self.check_allocation()
         if allocation_ok == False:
-            logger.info(f"{Colors.RED}Portfolio allocation is not within target ratio (70% spot / 30% perp){Colors.RESET}")
+            logger.info(f"{Colors.RED}Portfolio allocation is not within target ratio (X% spot / X% perp){Colors.RESET}")
         
         # Show the best funding rate coin (but don't try to create a position here)
         best_coin = self.get_best_yearly_funding_rate()
@@ -1188,7 +1222,7 @@ class Delta:
         
         allocation_ok = self.check_allocation()
         if allocation_ok == False:
-            logger.info(f"{Colors.RED}Portfolio allocation is not within target ratio (70% spot / 30% perp){Colors.RESET}")
+            logger.info(f"{Colors.RED}Portfolio allocation is not within target ratio (X% spot / X% perp){Colors.RESET}")
         
         # Check if we should create a new delta-neutral position
         best_coin = self.get_best_yearly_funding_rate()
