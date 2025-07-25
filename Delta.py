@@ -174,7 +174,7 @@ class Delta:
                             deployer_trading_fee_share=spot_coin["deployerTradingFeeShare"],
                             tick_size=0.1
                         )
-                    elif coin_name == "PUMP" and spot_coin["name"] == "PUMP":
+                    elif coin_name == "PUMP" and spot_coin["name"] == "UPUMP":
                         self.coins[coin_name].spot = SpotMarket(
                             name=spot_coin["name"],
                             token_id=spot_coin["tokenId"],
@@ -252,6 +252,8 @@ class Delta:
                         coin_name = "SOL"
                     elif coin_name == "UFART":
                         coin_name = "FARTCOIN"
+                    elif coin_name == "UPUMP":
+                        coin_name = "PUMP"
                     if coin_name in self.coins and self.coins[coin_name].spot:
                         self.coins[coin_name].spot.position = {
                             "total": float(balance["total"]),
@@ -566,6 +568,8 @@ class Delta:
                 spot_name = "USOL"
             elif coin_name == "FARTCOIN":
                 spot_name = "UFART"
+            elif coin_name == "PUMP":
+                spot_name = "UPUMP"
             else:
                 spot_name = coin_name
                 
@@ -635,6 +639,8 @@ class Delta:
                             spot_name = "USOL"
                         elif pending_order.coin_name == "FARTCOIN":
                             spot_name = "UFART"
+                        elif pending_order.coin_name == "PUMP":
+                            spot_name = "UPUMP"
                         else:
                             spot_name = pending_order.coin_name
                             
@@ -673,6 +679,8 @@ class Delta:
                         spot_name = "USOL"
                     elif pending_order.coin_name == "FARTCOIN":
                         spot_name = "UFART"
+                    elif pending_order.coin_name == "PUMP":
+                        spot_name = "UPUMP"
                     else:
                         spot_name = pending_order.coin_name
                         
@@ -784,6 +792,8 @@ class Delta:
                     spot_name = "USOL"
                 elif coin_name == "FARTCOIN":
                     spot_name = "UFART"
+                elif coin_name == "PUMP":
+                    spot_name = "UPUMP"
                 else:
                     spot_name = coin_name
                     
@@ -1067,6 +1077,8 @@ class Delta:
                             coin_name = "SOL"
                         elif coin_name == "UFART":
                             coin_name = "FARTCOIN"
+                        elif coin_name == "UPUMP":
+                            coin_name = "PUMP"
                         if coin_name in self.coins and self.coins[coin_name].spot:
                             self.coins[coin_name].spot.position = {
                                 "total": float(balance["total"]),
