@@ -1,7 +1,7 @@
 FORKED VERSION with 
 * added coins (SOL, PUMP, FARTCOIN, ...)
 * uses wallet address instead of Vault
-* The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN).
+* The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; in config.json, the BASE string of the Futures Market should be used, format is BASE/USDC:USDC).
 
 # HyperVault Delta Bot v1.0.0
 
