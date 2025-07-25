@@ -11,7 +11,7 @@ Additional information:
 *  You should use a dedicated Hot Wallet. Cold wallets like ledger will not work.
 *  When setting up the environment variables for the `HYPERLIQUID_ADDRESS` and `HYPERLIQUID_PRIVATE_KEY`, you must use ones from a Hot wallet (e.g. generated with Rabby, Metamask, ...). Your `HYPERLIQUID_ADDRESS` is your Ethereum wallet addrees (copy/paste from Metamask or Rabby), and `HYPERLIQUID_PRIVATE_KEY` is the secret key given by Hyperliquid when you generate a API key pair (On Hyperliquid website, section more->API).
 
-# HyperVault Delta Bot v1.0.0
+# HyperVault Delta Bot forked v1.0.0+
 
 A delta-neutral trading bot for HyperLiquid exchange, designed to create and manage delta-neutral positions across spot and perpetual markets.
 
