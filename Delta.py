@@ -997,7 +997,7 @@ class Delta:
             for coin_name, rate in funding_rates.items():
                 if coin_name in self.coins and self.coins[coin_name].perp:
                     # Set the coin leverage to Nx (cross margin)
-                    logger.info(self.exchange.update_leverage(self.wanted_leverage, coin_name))
+                    logger.info(self.exchange.update_leverage(self.wanted_leverage, coin_name, is_cross=True))
 
             # Refresh user state to get latest positions
             try:
@@ -1228,6 +1228,7 @@ class Delta:
             # Only proceed if we don't have existing positions or if best coin already has a position
             if (not existing_positions_found or is_delta_neutral) and rate >= 5.0:
                 if not is_delta_neutral:
+                    logger.info(self.exchange.update_leverage(self.wanted_leverage, best_coin, is_cross=True))
                     logger.info(f"{Colors.GREEN}Creating delta-neutral position for {Colors.YELLOW}{best_coin}...{Colors.RESET}")
                     result = await self.execute_best_delta_strategy()
                     if result:
@@ -1237,7 +1238,7 @@ class Delta:
                 else:
                     logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
                     # Set the coin leverage to Nx (cross margin) just in case
-                    logger.info(self.exchange.update_leverage(self.wanted_leverage, best_coin))
+                    logger.info(self.exchange.update_leverage(self.wanted_leverage, best_coin, is_cross=True))
             elif is_delta_neutral:
                 logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
             else:
