@@ -1,3 +1,5 @@
+FORKED VERSION with added coins and uses address instead of Vault
+
 # HyperVault Delta Bot v1.0.0
 
 A delta-neutral trading bot for HyperLiquid exchange, designed to create and manage delta-neutral positions across spot and perpetual markets.
