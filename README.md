@@ -5,7 +5,7 @@ FORKED VERSION with
 
 Additional information:
 *  in config.json, the BASE string of the Futures Market should be used, format is BASE/USDC:USDC.
-*  You should use a didicated Hot Wallet.
+*  You should use a dedicated Hot Wallet. Cold wallets like ledger will not work.
 *  When setting up the environment variables, you must use a Hot wallet. Your HYPERLIQUID_ADDRESS is your Ethereum wallet addrees (copy/paste from Metamask or Rabby), and HYPERLIQUID_PRIVATE_KEY is the secret key one given by Hyperliquid when you generate a API key pair (section more->API).
 
 # HyperVault Delta Bot v1.0.0
