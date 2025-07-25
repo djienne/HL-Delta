@@ -4,6 +4,7 @@ HL-Delta: Automated trading system for Hyperliquid
 """
 
 import os
+import sys
 import logging
 import asyncio
 import time
@@ -205,6 +206,7 @@ class Delta:
             self.spot_allocation_pct = self.config["allocation"]["spot_pct"] / 100.0
             self.perp_allocation_pct = self.config["allocation"]["perp_pct"] / 100.0
             self.rebalance_threshold = self.config["allocation"]["rebalance_threshold"]
+            self.wanted_leverage = self.config["allocation"]["leverage"]
             
             # Refresh interval
             self.refresh_interval_sec = self.config["trading"].get("refresh_interval_sec", 60)
@@ -869,6 +871,8 @@ class Delta:
             
             status_color = Colors.GREEN if is_delta_neutral else Colors.RED
             status_text = " DELTA NEUTRAL" if is_delta_neutral else " NOT DELTA NEUTRAL"
+            if status_text == " NOT DELTA NEUTRAL" and spot_size == 0.0 and perp_size == 0.0 :
+                status_text = " NOT DELTA NEUTRAL (no position)"
             logger.info(f"  Delta Status: {status_color}{status_text}{Colors.RESET}")
             
             if perp_size != 0 or spot_size != 0:
@@ -988,7 +992,13 @@ class Delta:
                     elif rate >= 5:
                         rate_color = Colors.YELLOW
                     logger.info(f"Updated {Colors.YELLOW}{coin_name}{Colors.RESET} yearly funding rate: {rate_color}{rate:.4f}%{Colors.RESET}")
-            
+
+            # update leverage
+            for coin_name, rate in funding_rates.items():
+                if coin_name in self.coins and self.coins[coin_name].perp:
+                    # Set the coin leverage to Nx (cross margin)
+                    logger.info(self.exchange.update_leverage(self.wanted_leverage, coin_name))
+
             # Refresh user state to get latest positions
             try:
                 self.user_state = self.info.user_state(self.address)
@@ -1226,6 +1236,8 @@ class Delta:
                         logger.warning(f"{Colors.RED}Failed to create delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
                 else:
                     logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
+                    # Set the coin leverage to Nx (cross margin) just in case
+                    logger.info(self.exchange.update_leverage(self.wanted_leverage, best_coin))
             elif is_delta_neutral:
                 logger.info(f"{Colors.GREEN}Already have a delta-neutral position for {Colors.YELLOW}{best_coin}{Colors.RESET}")
             else:
@@ -1286,24 +1298,17 @@ async def main():
     delta = None
     try:
         delta = Delta("config.json")
-        setup_signal_handlers(delta)
+        # Remove setup_signal_handlers(delta)
         await delta.start()
     except KeyboardInterrupt:
-        logger.info("Keyboard interrupt detected, closing positions...")
+        logger.info("Keyboard interrupt detected. Exiting gracefully without closing positions.")
         if delta:
-            try:
-                # Make sure to close positions before exiting
-                logger.info("Attempting to close all positions...")
-                await delta.close_all_delta_positions()
-                logger.info("Position closing complete")
-                await delta.exit_program(close_positions=False)  # Already closed positions above
-            except Exception as e:
-                logger.error(f"Error during shutdown: {e}", exc_info=True)
+            await delta.exit_program(close_positions=False)  # <- THIS is the key change
     except Exception as e:
         logger.error(f"Error running Delta: {e}", exc_info=True)
         if delta:
             try:
-                await delta.exit_program(close_positions=True)
+                await delta.exit_program(close_positions=True)  # optional fallback if exception not from keyboard
             except Exception as shutdown_e:
                 logger.error(f"Error during shutdown: {shutdown_e}", exc_info=True)
 
@@ -1314,6 +1319,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         # This will catch the KeyboardInterrupt at the top level after signal handling
         logger.info("Exiting due to keyboard interrupt")
+        sys.exit()
     except SystemExit:
         # Handle the SystemExit exception from sys.exit() in the signal handler
         pass
