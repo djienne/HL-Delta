@@ -1,6 +1,6 @@
 FORKED VERSION with 
 * added coins (SOL, PUMP, FARTCOIN, ...), will probably add more later.
-* uses wallet address instead of Vault.
+* uses wallet address instead of Vault (no need to pay 100$ to set up a Vault).
 * The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; it is somewhat arbitrary so it will be hardcoded).
 
 Additional information:
