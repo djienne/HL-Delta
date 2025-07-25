@@ -27,7 +27,7 @@ A delta-neutral trading bot for HyperLiquid exchange, designed to create and man
 - RESTful API for remote control and monitoring
 - Handles order tracking and management
 - Periodic checks to find better opportunities based on funding rates
-- ---Graceful shutdown with position closing---
+- <s>Graceful shutdown with position closing</s>
 - Comprehensive logging
 
 ## Configuration
