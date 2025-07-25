@@ -1,7 +1,11 @@
 FORKED VERSION with 
 * added coins (SOL, PUMP, FARTCOIN, ...)
 * uses wallet address instead of Vault
-* The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; in config.json, the BASE string of the Futures Market should be used, format is BASE/USDC:USDC).
+* The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN; it is somewhat arbitrary so it will be hardcoded).
+
+Additional information:
+*  in config.json, the BASE string of the Futures Market should be used, format is BASE/USDC:USDC
+*  When setting up the environment variables, you must use a Hot wallet. Your HYPERLIQUID_ADDRESS is your Ethereum wallet addrees (copy/paste from Metamask or Rabby), and HYPERLIQUID_PRIVATE_KEY is the secret key one given by Hyperliquid when you generate a API key pair (section more->API).
 
 # HyperVault Delta Bot v1.0.0
 
