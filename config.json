@@ -1,7 +1,7 @@
 {
   "general": {
     "debug": false,
-    "tracked_coins": ["BTC", "ETH", "HYPE", "USDC"],
+    "tracked_coins": ["BTC", "ETH", "HYPE", "SOL", "USDC", "PUMP", "PURR", "FARTCOIN"],
     "autostart": true
   },
   "allocation": {
