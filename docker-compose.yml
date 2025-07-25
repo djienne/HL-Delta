@@ -1,0 +1,19 @@
+version: '3.8'
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.48.84.0/22
+services:
+  delta-bot:
+    container_name: delta-bot
+    image: hypervault-tradingbot:delta-1.0.0
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - ./config.json:/app/config.json
+      - ./Delta.py:/app/Delta.py
+    restart: unless-stopped
