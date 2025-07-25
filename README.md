@@ -42,13 +42,14 @@ The preferred way to configure the bot is through the `config.json` file, which 
 {
   "general": {
     "debug": false,
-    "tracked_coins": ["BTC", "ETH", "HYPE", "USDC"],
+    "tracked_coins": ["BTC", "ETH", "HYPE", "SOL", "USDC", "PUMP", "PURR", "FARTCOIN"],
     "autostart": true
   },
   "allocation": {
     "spot_pct": 70,
     "perp_pct": 30,
-    "rebalance_threshold": 0.05
+    "rebalance_threshold": 0.05,
+    "leverage": 3
   },
   "trading": {
     "refresh_interval_sec": 60
@@ -58,7 +59,7 @@ The preferred way to configure the bot is through the `config.json` file, which 
     "port": 8080,
     "enabled": true
   }
-}
+} 
 ```
 
 Configuration sections:
@@ -69,9 +70,10 @@ Configuration sections:
 - **Allocation settings:**
   - `spot_pct`: Percentage of capital to allocate to spot positions (e.g., 70%)
   - `perp_pct`: Percentage of capital to allocate to perpetual positions (e.g., 30%)
-  - `rebalance_threshold`: Threshold for rebalancing positions (e.g., 0.05 = 5%)
+  - `rebalance_threshold`: Funding APR value threshold for changing the position (e.g., 0.05 = 5% if APR funding is less that 5%, stop and try to open another, better, one on another coin)
+  - `leverage` : leverage used
 - **Trading settings:**
-  - `refresh_interval_sec`: Interval for refreshing positions in seconds
+  - `refresh_interval_sec`: Interval for checking for refreshing positions in seconds
 - **API settings:**
   - `host`: Host for the API server
   - `port`: Port for the API server
@@ -89,6 +91,8 @@ Example using environment variables:
 export HYPERLIQUID_PRIVATE_KEY={PRIVATE_KEY}
 export HYPERLIQUID_ADDRESS={SUB_ACCOUNT_TRADING_ADDRESS}
 ```
+
+On windows, add it in the Windows dedicated setting.
 
 ## Quick Start
 
