@@ -1299,20 +1299,26 @@ async def main():
     delta = None
     try:
         delta = Delta("config.json")
-        # Remove setup_signal_handlers(delta)
+        setup_signal_handlers(delta)
         await delta.start()
     except KeyboardInterrupt:
-        logger.info("Keyboard interrupt detected. Exiting gracefully without closing positions.")
+        logger.info("Keyboard interrupt detected, closing positions...")
         if delta:
-            await delta.exit_program(close_positions=False)  # <- THIS is the key change
+            try:
+                # Make sure to close positions before exiting
+                logger.info("Attempting to close all positions...")
+                await delta.close_all_delta_positions()
+                logger.info("Position closing complete")
+                await delta.exit_program(close_positions=False)  # Already closed positions above
+            except Exception as e:
+                logger.error(f"Error during shutdown: {e}", exc_info=True)
     except Exception as e:
         logger.error(f"Error running Delta: {e}", exc_info=True)
         if delta:
             try:
-                await delta.exit_program(close_positions=True)  # optional fallback if exception not from keyboard
+                await delta.exit_program(close_positions=True)
             except Exception as shutdown_e:
                 logger.error(f"Error during shutdown: {shutdown_e}", exc_info=True)
-
 
 if __name__ == "__main__":
     try:
@@ -1320,7 +1326,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         # This will catch the KeyboardInterrupt at the top level after signal handling
         logger.info("Exiting due to keyboard interrupt")
-        sys.exit()
     except SystemExit:
         # Handle the SystemExit exception from sys.exit() in the signal handler
         pass
