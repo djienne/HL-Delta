@@ -17,6 +17,7 @@ A delta-neutral trading bot for HyperLiquid exchange, designed to create and man
 
 ![Delta Bot in Action](./assets/terminal-screenshot.png)
 *Delta Bot taking a position on HyperLiquid Exchange*
+![Delta Bot in Action](./assets/terminal-screenshot2.png)
 
 ## Features
 
