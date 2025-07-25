@@ -1,4 +1,5 @@
 FORKED VERSION with added coins and uses address instead of Vault
+The script 'show_tickers.py' shows all tickers for futures and spot, to help to code them in Delta.py (eg. for FARTCOIN, spot name is UFART and futures name is FARTCOIN).
 
 # HyperVault Delta Bot v1.0.0
 
