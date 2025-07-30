@@ -10,7 +10,7 @@ Additional information:
 *  You should use a dedicated Hot Wallet. Cold wallets like ledger will not work.
 *  When setting up the environment variables for the `HYPERLIQUID_ADDRESS` and `HYPERLIQUID_PRIVATE_KEY`, you must use ones from a Hot wallet (e.g. generated with Rabby, Metamask, ...). Your `HYPERLIQUID_ADDRESS` is your Ethereum wallet addrees (copy/paste from Metamask or Rabby), and `HYPERLIQUID_PRIVATE_KEY` is the secret key given by Hyperliquid when you generate a API key pair (On Hyperliquid website, section more->API).
 
-  ** NOT THOROUGHLY TESTED. BE CAREFUL**
+  ***NOT THOROUGHLY TESTED. BE CAREFUL***
 
 # HyperVault Delta Bot forked v1.0.0+
 
